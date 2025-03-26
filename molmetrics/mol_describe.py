@@ -6,13 +6,6 @@ from rdkit.Chem import Crippen
 from .util import parallel_apply
 import logging
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
-)
-
 def calc_mol_descriptors(mol: Chem.Mol) -> dict | None:
     """
     Calculate selected molecular descriptors for a molecule.

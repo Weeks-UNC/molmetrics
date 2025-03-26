@@ -1,18 +1,10 @@
 #!/usr/bin/env python3
 import pandas as pd
 from rdkit import Chem
-from rdkit.Chem import AllChem
+from rdkit.Chem import AllChem, rdMolDescriptors
 from concurrent.futures import ProcessPoolExecutor
 import logging
 from typing import Any, Callable
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
-)
-
 
 def apply_func(x: Any, func: Callable, kwargs: dict) -> Any:
     """
@@ -95,3 +87,15 @@ def is_valid_molecule(mol: Chem.Mol) -> bool:
         bool: True if the molecule is valid, False otherwise.
     """
     return mol is not None and isinstance(mol, Chem.Mol)
+
+
+def describe_mol(mol):
+    """Get comprehensive description of an RDKit molecule"""
+    if not mol:
+        return "Invalid molecule"
+    
+    return "\n".join([
+        f"SMILES: {Chem.MolToSmiles(Chem.RemoveHs(mol))}",
+        f"Formula: {rdMolDescriptors.CalcMolFormula(mol)}",
+        f"Mass: {rdMolDescriptors.CalcExactMolWt(mol):.2f}"
+    ])

@@ -6,14 +6,7 @@ import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import AllChem, rdDistGeom, rdMolDescriptors
 from concurrent.futures import ThreadPoolExecutor
-from .util import parallel_apply
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
-)
+from .util import parallel_apply, describe_mol
 
 def needs_hydrogens(mol: Chem.Mol) -> bool:
     """Determine whether a molecule requires the addition of hydrogen atoms.
@@ -52,31 +45,41 @@ def configure_etkdg(random_seed: int, force_tolerance: float, prune_thresh: floa
     params.pruneRmsThresh = prune_thresh
     return params
 
-def calculate_conformer_energies(mol: Chem.Mol, conformer_ids: list[int]) -> Dict[int, float]:
+def calculate_conformer_energies(mol: Chem.Mol, conformer_ids: list[int]) -> Optional[Dict[int, float]]:
     """
     Calculate the MMFF energies for the specified conformers of a molecule in parallel.
 
-    This function computes the force field energy for each conformer of the provided molecule
-    using the Merck Molecular Force Field (MMFF) parameters available from RDKit. It processes
-    the conformers concurrently by employing a ThreadPoolExecutor.
+    If any conformer fails, the entire molecule is marked as failed, and a single error message is logged.
 
     Parameters:
         mol (rdkit.Chem.Mol): The RDKit molecule with pre-computed 3D conformations.
         conformer_ids (List[int]): A list of conformer identifiers whose energies are to be calculated.
 
     Returns:
-        Dict[int, float]: A dictionary mapping each conformer identifier to its calculated MMFF energy.
-
-    Notes:
-        - The molecule must have valid 3D conformations for the specified conformer_ids.
-        - The MMFF properties for the molecule are computed once and reused for all conformers.
+        Optional[Dict[int, float]]: A dictionary mapping each conformer identifier to its calculated MMFF energy,
+        or None if the calculation fails for any conformer.
     """
     mmff_props = AllChem.MMFFGetMoleculeProperties(mol)
-    with ThreadPoolExecutor() as executor:
-        energies = dict(executor.map(
-            lambda conformer_id: (conformer_id, AllChem.MMFFGetMoleculeForceField(mol, mmff_props, confId=conformer_id).CalcEnergy()),
-            conformer_ids
-        ))
+    
+    def safe_calc_energy(conformer_id: int):
+        try:
+            ff = AllChem.MMFFGetMoleculeForceField(mol, mmff_props, confId=conformer_id)
+            if ff is None:
+                raise ValueError(f"Force field returned None for conformer {conformer_id}")
+            return ff.CalcEnergy()
+        except Exception as e:
+            logging.info(f"Error calculating energy for conformer: {e}", exc_info=False)
+            return None
+
+    # Calculate energies for all conformers
+    energies = {}
+    for conformer_id in conformer_ids:
+        energy = safe_calc_energy(conformer_id)
+        if energy is None:
+            logging.error(f"Failed to calculate energies of conformers of molecule: {describe_mol(mol)}")
+            return None  # Fail the entire molecule if any conformer fails
+        energies[conformer_id] = energy
+
     return energies
 
 def filter_conformers(mol: Chem.Mol, energies: Dict[int, float], energy_range: float) -> Tuple[Chem.Mol, Dict[int, float]]:
@@ -120,6 +123,8 @@ def generate_conformers_and_optimize(
     """
     Generate and optimize conformers for a molecule using ETKDGv3 parameters and MMFF energy evaluation.
 
+    If any conformer fails during energy calculation, the entire molecule is marked as failed.
+
     Args:
         mol (Chem.Mol): RDKit molecule object.
         random_seed (int): Random seed for conformer generation.
@@ -133,7 +138,7 @@ def generate_conformers_and_optimize(
             A tuple containing:
               - the molecule with only the filtered conformers,
               - a dictionary mapping conformer IDs to their calculated energies.
-            Returns (None, None) if conformer generation fails.
+            Returns (None, None) if conformer generation or energy calculation fails.
     """
     try:
         # Input validation
@@ -149,10 +154,14 @@ def generate_conformers_and_optimize(
         params = configure_etkdg(random_seed, force_tolerance, prune_thresh)
         conformer_ids = rdDistGeom.EmbedMultipleConfs(mol, num_conformers, params)
         if not conformer_ids:
+            logging.error("Conformer generation failed: No conformers were generated.")
             return None, None
 
         # Calculate and filter energies
         energies = calculate_conformer_energies(mol, conformer_ids)
+        if energies is None:
+            return None, None  # Fail the molecule if energy calculation fails
+
         return filter_conformers(mol, energies, energy_range)
         
     except Exception as e:
@@ -215,8 +224,7 @@ def calc_geometry(
 
 
 def add_geometry(
-    df: pd.DataFrame, 
-    molcol: str, 
+    df: pd.DataFrame,
     threedcol: str,
     random_seed: int,
     force_tolerance: float,
@@ -248,8 +256,8 @@ def add_geometry(
         - The function applies parallel processing to generate conformers and optimize geometries,
           ensuring efficient processing of potentially large datasets.
     """
-    if molcol not in df.columns:
-        raise ValueError(f"Column {molcol} not found in DataFrame")
+    if threedcol not in df.columns:
+        raise ValueError(f"Column {threedcol} not found in DataFrame")
     if df.empty:
         logging.warning("Empty DataFrame provided")
         return
@@ -257,7 +265,7 @@ def add_geometry(
     results = parallel_apply(
         df, 
         generate_conformers_and_optimize,
-        molcol,
+        threedcol,
         random_seed=random_seed,
         force_tolerance=force_tolerance,
         prune_thresh=prune_thresh,
@@ -265,6 +273,6 @@ def add_geometry(
         energy_range=energy_range
     )
     
-    df[threedcol], energy_dicts = zip(*results)
+    _, energy_dicts = zip(*results)
     geom_props = [calc_geometry(mol, energies) for mol, energies in zip(df[threedcol], energy_dicts)]
     df["NPR1"], df["NPR2"], df["Geometry"] = zip(*geom_props)

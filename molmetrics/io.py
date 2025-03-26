@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import pickle
 import pandas as pd
+from pathlib import Path
 from rdkit import Chem
 from rdkit.Chem import PandasTools
-from pathlib import Path
 from PIL import PngImagePlugin
 import logging
 
@@ -11,13 +11,6 @@ from .util import is_valid_molecule
 
 # Increase the PngImagePlugin.MAX_TEXT_CHUNK limit to 4 GB
 PngImagePlugin.MAX_TEXT_CHUNK = 4 * 1024 * 1024 * 1024
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
-)
 
 ### PandasTools settings
 PandasTools.InstallPandasTools()
@@ -154,21 +147,85 @@ def make_from_pickle(
         logging.error(f"Unable to save .XLSX file: {e}", exc_info=True)
 
 
+# def save_df(
+#     df: pd.DataFrame,
+#     out: str | Path,
+#     file: str | Path,
+#     molcol: str | list,
+#     threedcol: str,
+#     no_img: bool,
+# ):
+#     """
+#     Save a DataFrame to various output formats (SDF, HTML, Excel, and pickle).
+
+#     Args:
+#         df (pd.DataFrame): DataFrame to save.
+#         out (str | Path): Output directory path.
+#         file (str | Path): Input file path for naming outputs.
+#         molcol (str | list): Column(s) containing RDKit molecule objects.
+#         no_img (bool): Whether to exclude images in the Excel output.
+#     """
+#     try:
+#         if out:
+#             dir = Path(out)
+#         else:
+#             dir = Path(file).parent
+#         if not dir.is_dir():
+#             dir.mkdir(parents=True, exist_ok=True)
+#         file_name = Path(file).stem
+#         sdf_out = str(Path(dir, file_name + "_qed.sdf"))
+
+#         # Ensure the molecule column contains valid RDKit molecule objects
+#         valid_molcol = molcol[-1]
+#         df = df[df[valid_molcol].apply(is_valid_molecule)]
+
+#         # Write the SDF file
+#         PandasTools.WriteSDF(df, sdf_out, molColName=valid_molcol, properties=list(df.columns))
+#         logging.info(f"Saved SDF file: {sdf_out}")
+
+#         # Save HTML
+#         html_out = Path(dir, file_name + "_qed.html")
+#         df.to_html(html_out)
+#         logging.info(f"Saved HTML file: {html_out}")
+
+#         # Save pickle
+#         pickle_out = Path(dir, file_name + "_conformers.pkl")
+#         with open(pickle_out, 'wb') as f:
+#             pickle.dump(df, f)
+#         logging.info(f"Saved pickle file: {pickle_out}")
+
+#         # Save Excel
+#         excel_out = Path(dir, file_name + "_qed.xlsx")
+#         try:
+#             if no_img:
+#                 df.to_excel(excel_out, index=False)
+#             else:
+#                 PandasTools.SaveXlsxFromFrame(df, excel_out, molCol=molcol, size=(150, 150))
+#             logging.info(f"Saved Excel file: {excel_out}")
+#         except Exception as e:
+#             logging.error(f"Error saving Excel file: {e}", exc_info=True)
+#     except Exception as e:
+#         logging.error(f"Error saving DataFrame: {e}", exc_info=True)
+
+
 def save_df(
     df: pd.DataFrame,
     out: str | Path,
     file: str | Path,
     molcol: str | list,
+    threedcol: str,
     no_img: bool,
 ):
     """
     Save a DataFrame to various output formats (SDF, HTML, Excel, and pickle).
+    The HTML output will include interactive 3D molecule visualizations using py3Dmol.
 
     Args:
         df (pd.DataFrame): DataFrame to save.
         out (str | Path): Output directory path.
         file (str | Path): Input file path for naming outputs.
         molcol (str | list): Column(s) containing RDKit molecule objects.
+        threedcol (str): Column containing 3D RDKit molecule objects.
         no_img (bool): Whether to exclude images in the Excel output.
     """
     try:
@@ -189,9 +246,87 @@ def save_df(
         PandasTools.WriteSDF(df, sdf_out, molColName=valid_molcol, properties=list(df.columns))
         logging.info(f"Saved SDF file: {sdf_out}")
 
-        # Save HTML
+        # Save HTML with interactive 3D molecules
         html_out = Path(dir, file_name + "_qed.html")
-        df.to_html(html_out)
+        with open(html_out, 'w') as f:
+            f.write("""
+            <html>
+            <head>
+                <title>Molecule Viewer</title>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/1.5.0/3Dmol-min.js"></script>
+                <style>
+                    .mol-container {
+                        width: 300px;
+                        height: 300px;
+                        position: relative;
+                    }
+                    table {
+                        border-collapse: collapse;
+                        width: 100%;
+                    }
+                    th, td {
+                        border: 1px solid #ddd;
+                        padding: 8px;
+                        text-align: left;
+                    }
+                    tr:nth-child(even) {
+                        background-color: #f2f2f2;
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>Molecule Viewer</h1>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>2D Structure</th>
+                            <th>3D Structure</th>
+                            <th>Properties</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            """)
+            
+            for _, row in df.iterrows():
+                # Convert 3D molecule to PDB format
+                pdb_block = Chem.MolToPDBBlock(row[threedcol])
+                
+                f.write(f"""
+                        <tr>
+                            <td>{row.get('ID', 'N/A')}</td>
+                            <td>{PandasTools._moltoimg(row[valid_molcol], (150, 150))}</td>
+                            <td>
+                                <div class="mol-container" id="mol-{row.get('ID', 'N/A')}"></div>
+                                <script>
+                                    let viewer = $3Dmol.createViewer(document.getElementById('mol-{row.get('ID', 'N/A')}'));
+                                    viewer.addModel(`{pdb_block}`, "pdb");
+                                    viewer.setStyle({{stick: {{}} }});
+                                    viewer.zoomTo();
+                                    viewer.render();
+                                </script>
+                            </td>
+                            <td>
+                                <ul>
+                """)
+                
+                # Add properties
+                for col in df.columns:
+                    if col not in [valid_molcol, threedcol]:
+                        f.write(f"<li><strong>{col}:</strong> {row[col]}</li>")
+                
+                f.write("""
+                                </ul>
+                            </td>
+                        </tr>
+                """)
+            
+            f.write("""
+                    </tbody>
+                </table>
+            </body>
+            </html>
+            """)
         logging.info(f"Saved HTML file: {html_out}")
 
         # Save pickle
@@ -212,5 +347,3 @@ def save_df(
             logging.error(f"Error saving Excel file: {e}", exc_info=True)
     except Exception as e:
         logging.error(f"Error saving DataFrame: {e}", exc_info=True)
-
-    logging.info("Done!")

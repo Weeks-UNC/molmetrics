@@ -28,7 +28,11 @@ from molmetrics.geometry import add_geometry
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[
+        logging.FileHandler("molmetrics.log"),
+        logging.StreamHandler()
+    ]
 )
 
 
@@ -74,6 +78,8 @@ def get_mol_metrics(
         no_img (bool): Flag indicating whether to exclude 3D images from the output Excel.
     """
     molcol_list = ["ROMol", "3DMol"]
+    if geometry:
+        df['3DMol'] = df[molcol].copy()
     
     try:
         if substructures:
@@ -102,9 +108,11 @@ def get_mol_metrics(
         # Generate conformers and add geometry descriptors
         if geometry:
             logging.info("Generating conformers and calculating geometry descriptors...")
-            add_geometry(df, molcol, threedcol, random_seed, force_tolerance, prune_thresh, num_conformers, energy_range)
+            add_geometry(df, threedcol, random_seed, force_tolerance, prune_thresh, num_conformers, energy_range)
                 
-        save_df(df=df, out=out, file=file, molcol=molcol_list, no_img=no_img)
+        save_df(df=df, out=out, file=file, molcol=molcol_list, threedcol=threedcol, no_img=no_img)
+        
+        logging.info("Done!")
     except Exception as e:
         logging.error(f"Error in get_mol_metrics: {e}", exc_info=True)
 
@@ -346,6 +354,7 @@ def main(
             files += file
 
         for file in files:
+            logging.info(f"Processing file: {file}")
             process_file(file, column, substructures, properties, moldescriptors, geometry, random_seed, force_tolerance, prune_thresh, num_conformers, energy_range, out, no_img)
     except Exception as e:
         logging.critical(f"Critical error in main: {e}", exc_info=True)

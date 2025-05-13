@@ -43,6 +43,7 @@ def configure_etkdg(random_seed: int, force_tolerance: float, prune_thresh: floa
     params.optimizerForceTol = force_tolerance
     params.useSmallRingTorsions = True
     params.pruneRmsThresh = prune_thresh
+    params.maxIterations = 500
     return params
 
 def calculate_conformer_energies(mol: Chem.Mol, conformer_ids: list[int]) -> Optional[Dict[int, float]]:
@@ -143,25 +144,31 @@ def generate_conformers_and_optimize(
     try:
         # Input validation
         if not mol or num_conformers <= 0 or force_tolerance <= 0:
+            logging.warning("Invalid input molecule or parameters.")
             return None, None
 
-        # Prepare molecule
-        mol = Chem.AddHs(mol) if needs_hydrogens(mol) else Chem.Mol(mol)
+        # Log molecule details
+        logging.info(f"Processing molecule: {describe_mol(mol)}")
+        if needs_hydrogens(mol):
+            logging.info(f"Adding hydrogens to the {describe_mol(mol)}.")
+            mol = Chem.AddHs(mol)
+
         if not mol.GetNumAtoms():
+            logging.warning("Molecule has no atoms.")
             return None, None
 
         # Generate conformers
         params = configure_etkdg(random_seed, force_tolerance, prune_thresh)
         conformer_ids = rdDistGeom.EmbedMultipleConfs(mol, num_conformers, params)
         if not conformer_ids:
-            logging.error("Conformer generation failed: No conformers were generated.")
+            logging.warning("No conformers were generated for the molecule.")
             return None, None
 
         # Calculate and filter energies
         energies = calculate_conformer_energies(mol, conformer_ids)
         if energies is None:
             return None, None  # Fail the molecule if energy calculation fails
-
+        
         return filter_conformers(mol, energies, energy_range)
         
     except Exception as e:
@@ -189,6 +196,11 @@ def calc_geometry(
     """
     try:
         if not mol or not energies:
+            return None, None, None
+
+        # Ensure the molecule has conformers
+        if mol.GetNumConformers() == 0:
+            logging.warning(f"Molecule has no conformers: {describe_mol(mol)}")
             return None, None, None
 
         # Boltzmann weighting
@@ -265,7 +277,7 @@ def add_geometry(
     results = parallel_apply(
         df, 
         generate_conformers_and_optimize,
-        threedcol,
+        column=threedcol,
         random_seed=random_seed,
         force_tolerance=force_tolerance,
         prune_thresh=prune_thresh,
@@ -273,6 +285,19 @@ def add_geometry(
         energy_range=energy_range
     )
     
-    _, energy_dicts = zip(*results)
-    geom_props = [calc_geometry(mol, energies) for mol, energies in zip(df[threedcol], energy_dicts)]
+    # Update the DataFrame with the filtered molecules
+    for i, (filtered_mol, energies) in enumerate(results):
+        if filtered_mol is not None and filtered_mol.GetNumConformers() > 0:
+            df.at[i, threedcol] = filtered_mol  # Update the molecule with conformers
+        else:
+            logging.warning(f"Molecule at index {i} has no conformers: {describe_mol(df.at[i, threedcol])}")
+
+    geom_props = [
+        calc_geometry(mol, energies) if mol is not None and mol.GetNumConformers() > 0 else (None, None, None)
+        for mol, energies in results
+    ]
+    while len(geom_props) < len(df):
+        geom_props.append((None, None, None))  # Fill missing rows with None values
+
+    # Assign geometry descriptors to the DataFrame
     df["NPR1"], df["NPR2"], df["Geometry"] = zip(*geom_props)

@@ -63,7 +63,7 @@ def remove_substructure(
     try:
         if substructures is None:
             return df
-        df["Fragment"] = df[molcol]
+        df["Fragment"] = df[molcol].copy()
         for substructure in substructures:
             if substructure:
                 substructure = Chem.MolFromSmarts(substructure)
@@ -94,7 +94,7 @@ def describe_mol(mol):
     if not mol:
         return "Invalid molecule"
     
-    return "\n".join([
+    return " ".join([
         f"SMILES: {Chem.MolToSmiles(Chem.RemoveHs(mol))}",
         f"Formula: {rdMolDescriptors.CalcMolFormula(mol)}",
         f"Mass: {rdMolDescriptors.CalcExactMolWt(mol):.2f}"

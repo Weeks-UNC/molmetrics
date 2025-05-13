@@ -77,9 +77,10 @@ def get_mol_metrics(
         file (Path): Input file path (for naming outputs).
         no_img (bool): Flag indicating whether to exclude 3D images from the output Excel.
     """
-    molcol_list = ["ROMol", "3DMol"]
+    molcol_list = ["ROMol"]
     if geometry:
         df['3DMol'] = df[molcol].copy()
+        molcol_list = ["ROMol", "3DMol"]
     
     try:
         if substructures:
@@ -87,7 +88,7 @@ def get_mol_metrics(
             df = remove_substructure(df, molcol, substructures=substructures)
             molcol = "Fragment"
             # Changed to call EmbedMolecule on each molecule individually
-            df["3DFragment"] = df[molcol].apply(lambda x: AllChem.EmbedMolecule(Chem.AddHs(x)))
+            df["3DFragment"] = df[molcol].copy()
             threedcol = "3DFragment"
             molcol_list = ["ROMol", molcol, threedcol]
                 
@@ -209,7 +210,7 @@ def parseArgs():
         type=str,
         nargs="*",
         default=None,
-        help="Removes substructure from property calculation. \
+        help="Provide SMARTS substructure to remove before calculating properties. \
              Use 'diazirine_handle' to remove diazarne FFF handles. \
              (Default=None)",
     )

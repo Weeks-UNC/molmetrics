@@ -6,6 +6,7 @@ from rdkit import Chem
 from rdkit.Chem import PandasTools
 from PIL import PngImagePlugin
 import logging
+import numpy as np
 
 from .util import is_valid_molecule
 
@@ -92,30 +93,37 @@ def make_from_sdf(
     Returns:
         tuple: A tuple containing the DataFrame, molecule column name, and 3D molecule column name.
     """
-    name = Path(sdf).stem
-    string_sdf = str(sdf)
+    try:
+        name = Path(sdf).stem
+        string_sdf = str(sdf)
 
-    molcol = "ROMol"
-    threedcol = "3DMol"
-    sdf_df = PandasTools.LoadSDF(
-        string_sdf,
-        idName="ID",
-        molColName=molcol,
-        includeFingerprints=False,
-        isomericSmiles=True,
-        smilesName="SMILES",
-        embedProps=True,
-        removeHs=False,
-        strictParsing=True,
-    )
+        molcol = "ROMol"
+        threedcol = "3DMol"
+        sdf_df = PandasTools.LoadSDF(
+            string_sdf,
+            idName="ID",
+            molColName=molcol,
+            includeFingerprints=False,
+            isomericSmiles=True,
+            smilesName="SMILES",
+            embedProps=True,
+            removeHs=False,
+            strictParsing=True,
+        )
 
-    # filters dataframe for organic molecules
-    sdf_df = sdf_df.dropna(subset=[molcol])
-    sdf_df = sdf_df[
-        sdf_df[molcol].apply(lambda x: x.HasSubstructMatch(Chem.MolFromSmiles("C")))
-    ]
-    
-    return sdf_df, molcol, threedcol
+        if sdf_df.empty or molcol not in sdf_df.columns:
+            raise ValueError("Failed to parse SDF file or missing 'ROMol' column.")
+
+        # Filter DataFrame for organic molecules
+        sdf_df = sdf_df.dropna(subset=[molcol])
+        sdf_df = sdf_df[
+            sdf_df[molcol].apply(lambda x: x.HasSubstructMatch(Chem.MolFromSmiles("C")))
+        ]
+
+        return sdf_df, molcol, threedcol
+    except Exception as e:
+        logging.error(f"Error processing SDF file {sdf}: {e}", exc_info=True)
+        raise
 
 
 def make_from_pickle(
@@ -197,10 +205,22 @@ def save_df(
         # Save Excel
         excel_out = Path(dir, file_name + "_qed.xlsx")
         try:
+            # Replace NaN and Inf values
+            cleaned_df = df.replace([np.nan, np.inf, -np.inf], "")
             if no_img:
-                df.to_excel(excel_out, index=False)
+                cleaned_df.to_excel(excel_out, index=False)
             else:
-                PandasTools.SaveXlsxFromFrame(df, excel_out, molCol=molcol, size=(150, 150))
+                # Safeguard: Exclude rows with invalid molecules before saving
+                valid_df = cleaned_df[cleaned_df[valid_molcol].apply(is_valid_molecule)]
+                if valid_df.empty:
+                    logging.warning("No valid molecules found for Excel export.")
+                    valid_df.to_excel(excel_out, index=False)  # Save without images
+                else:
+                    try:
+                        PandasTools.SaveXlsxFromFrame(valid_df, excel_out, molCol=molcol, size=(150, 150))
+                    except Exception as img_error:
+                        logging.error(f"Error generating molecule images for Excel: {img_error}", exc_info=True)
+                        valid_df.to_excel(excel_out, index=False)  # Fallback to saving without images
             logging.info(f"Saved Excel file: {excel_out}")
         except Exception as e:
             logging.error(f"Error saving Excel file: {e}", exc_info=True)

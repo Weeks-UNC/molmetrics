@@ -1,0 +1,19 @@
+import pytest
+from rdkit import Chem
+from molmetrics.mol_describe import add_mol_descriptors
+import pandas as pd
+
+def test_add_mol_descriptors():
+    # Input SMILES string
+    smiles = "O=C1O[C@@H](CNC(=O)C)CN1c3cc(F)c(N2CCOCC2)cc3"
+    mol = Chem.MolFromSmiles(smiles)
+    
+    # Create a DataFrame with the molecule
+    df = pd.DataFrame({"ROMol": [mol]})
+    
+    # Add molecular descriptors
+    add_mol_descriptors(df, molcol="ROMol")
+    
+    # Check the calculated descriptors
+    assert df.loc[0, "Num_Hetcy"] == 2, "Num_Hetcy should be 2"
+    assert df.loc[0, "Frac_sp3"] == 0.5, "Frac_sp3 should be 0.5"

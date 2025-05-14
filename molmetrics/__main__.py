@@ -16,6 +16,7 @@ import argparse
 from pathlib import Path
 from rdkit import Chem
 from rdkit.Chem import AllChem
+from rdkit.Chem import PandasTools
 import logging
 
 from molmetrics.io import make_from_smiles, make_from_sdf, make_from_pickle, save_df
@@ -97,6 +98,7 @@ def get_mol_metrics(
         add_qed(df, molcol)
         
         # Add QED properties
+        print(f'Properties: {properties}')
         if properties:
             logging.info("Calculating QED properties...")
             add_qed_properties(df, molcol)
@@ -116,6 +118,8 @@ def get_mol_metrics(
         logging.info("Done!")
     except Exception as e:
         logging.error(f"Error in get_mol_metrics: {e}", exc_info=True)
+    
+    return df
 
 
 def process_file(file, column, substructures, properties, moldescriptors, geometry, random_seed, force_tolerance, prune_thresh, num_conformers, energy_range, out, no_img):
@@ -149,7 +153,7 @@ def process_file(file, column, substructures, properties, moldescriptors, geomet
             logging.warning(f"Unsupported file type: {file}")
             return
 
-        get_mol_metrics(
+        _ = get_mol_metrics(
             df,
             molcol,
             threedcol,
@@ -170,6 +174,58 @@ def process_file(file, column, substructures, properties, moldescriptors, geomet
         logging.error(f"Error processing file {file}: {e}", exc_info=True)
 
 
+def process_smiles(smiles_list, substructures, properties, moldescriptors, geometry, random_seed, force_tolerance, prune_thresh, num_conformers, energy_range, out, no_img):
+    """
+    Process a list of SMILES strings and calculate molecular metrics.
+
+    Args:
+        smiles_list (list[str]): List of SMILES strings.
+        substructures (list | None): Optional list of substructures to remove from molecules.
+        properties (bool): Flag indicating whether to calculate QED properties.
+        moldescriptors (bool): Flag indicating whether to include molecular descriptors.
+        geometry (bool): Flag indicating whether to calculate geometry descriptors.
+        random_seed (int): Random seed for ETKDGv3 conformer generation.
+        force_tolerance (float): Force tolerance for conformer optimization.
+        num_conformers (int): Number of conformers to generate.
+        energy_range (float): Energy range (in kcal/mol) for Boltzmann averaging.
+        out (str | Path): Output directory path.
+        no_img (bool): Flag to exclude images in the output XLSX.
+    """
+    try:
+        data = {"SMILES": smiles_list}
+        df = pd.DataFrame(data)
+        molcol = "ROMol"
+        threedcol = "3DMol"
+        PandasTools.AddMoleculeColumnToFrame(df, smilesCol="SMILES", molCol=molcol, includeFingerprints=True)
+
+        df = get_mol_metrics(
+            df,
+            molcol,
+            threedcol,
+            substructures,
+            properties,
+            moldescriptors,
+            geometry,
+            random_seed,
+            force_tolerance,
+            prune_thresh,
+            num_conformers,
+            energy_range,
+            out,
+            file="smiles_input",
+            no_img=no_img,
+        )
+        
+        # Exclude specified columns if they are present
+        excluded_columns = ['ROMol', '3DMol', 'Fragment']
+        df_to_display = df.drop(columns=[col for col in excluded_columns if col in df.columns])
+        
+        # Display the modified DataFrame as stdout
+        print(df_to_display)
+    except Exception as e:
+        logging.error(f"Error processing SMILES strings: {e}", exc_info=True)
+
+
 def parseArgs():
     """
     Parse command-line arguments for the script.
@@ -186,6 +242,10 @@ def parseArgs():
 
     ex_group.add_argument(
         "-f", "--file", type=Path, nargs="+", help="Path(s) to input file(s) (.sdf, .csv, .xlsx, .pkl). Example: -f file1.sdf file2.csv"
+    )
+    
+    ex_group.add_argument(
+        "-m", "--molecule", type=str, nargs="+", help="SMILES strings of input molecules. Example: -f 'CCO' 'CCN'"
     )
 
     prs.add_argument(
@@ -305,6 +365,7 @@ def parseArgs():
 def main(
     directory: str | Path,
     file: list[Path] | None,
+    molecule: list[str] | None,
     out: str | Path,
     column: str,
     substructures: list | None,
@@ -343,6 +404,11 @@ def main(
         no_img (bool): Flag to exclude images in the output XLSX.
     """
     try:
+        if molecule:
+            logging.info("Processing SMILES strings...")
+            process_smiles(molecule, substructures, properties, moldescriptors, geometry, random_seed, force_tolerance, prune_thresh, num_conformers, energy_range, out, no_img)
+            return
+
         files = []
 
         if directory:

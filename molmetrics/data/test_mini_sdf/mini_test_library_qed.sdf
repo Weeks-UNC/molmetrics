@@ -45,15 +45,6 @@ C13H17N3O
 >  <SMILES>  (1) 
 C#CCCCCNC(=O)Nc1cc(C)ccn1
 
->  <ROMol>  (1) 
-<rdkit.Chem.rdchem.Mol object at 0x7fca936634c0>
-
->  <3DMol>  (1) 
-<rdkit.Chem.rdchem.Mol object at 0x7fca936634c0>
-
->  <Fragment>  (1) 
-<rdkit.Chem.rdchem.Mol object at 0x7fca93663990>
-
 >  <QED>  (1) 
 0.615041
 
@@ -162,15 +153,6 @@ C13H17N3O
 >  <SMILES>  (2) 
 C#CCCCCNC(=O)Nc1ccc(C)cn1
 
->  <ROMol>  (2) 
-<rdkit.Chem.rdchem.Mol object at 0x7fca93663610>
-
->  <3DMol>  (2) 
-<rdkit.Chem.rdchem.Mol object at 0x7fca93663610>
-
->  <Fragment>  (2) 
-<rdkit.Chem.rdchem.Mol object at 0x7fca93663a00>
-
 >  <QED>  (2) 
 0.615041
 
@@ -272,15 +254,6 @@ C12H14FN3O
 
 >  <SMILES>  (3) 
 C#CCCCCNC(=O)Nc1ccc(F)cn1
-
->  <ROMol>  (3) 
-<rdkit.Chem.rdchem.Mol object at 0x7fca936635a0>
-
->  <3DMol>  (3) 
-<rdkit.Chem.rdchem.Mol object at 0x7fca936635a0>
-
->  <Fragment>  (3) 
-<rdkit.Chem.rdchem.Mol object at 0x7fca93663a70>
 
 >  <QED>  (3) 
 0.616802
@@ -438,15 +411,6 @@ C18H22N2O4S
 
 >  <SMILES>  (4) 
 C#CCOc1ccccc1CN(CC1CN(S(C)(=O)=O)C1)C(=O)C=C
-
->  <ROMol>  (4) 
-<rdkit.Chem.rdchem.Mol object at 0x7fca93663680>
-
->  <3DMol>  (4) 
-<rdkit.Chem.rdchem.Mol object at 0x7fca93663680>
-
->  <Fragment>  (4) 
-<rdkit.Chem.rdchem.Mol object at 0x7fca93663ae0>
 
 >  <QED>  (4) 
 0.785219
@@ -608,15 +572,6 @@ C21H23FN2O2
 
 >  <SMILES>  (5) 
 C#CCC1(C(=O)NCc2ccc(CNC(=O)C=C)cc2F)CC=CCC1
-
->  <ROMol>  (5) 
-<rdkit.Chem.rdchem.Mol object at 0x7fca936636f0>
-
->  <3DMol>  (5) 
-<rdkit.Chem.rdchem.Mol object at 0x7fca936636f0>
-
->  <Fragment>  (5) 
-<rdkit.Chem.rdchem.Mol object at 0x7fca93663b50>
 
 >  <QED>  (5) 
 0.625914

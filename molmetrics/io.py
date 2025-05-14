@@ -188,7 +188,9 @@ def save_df(
         df = df[df[valid_molcol].apply(is_valid_molecule)]
 
         # Write the SDF file
-        PandasTools.WriteSDF(df, sdf_out, molColName=valid_molcol, properties=list(df.columns))
+        excluded_columns = ['ROMol', '3DMol', 'Fragment']
+        properties = [col for col in df.columns if col not in excluded_columns]
+        PandasTools.WriteSDF(df, sdf_out, molColName=valid_molcol, properties=properties)
         logging.info(f"Saved SDF file: {sdf_out}")
 
         # Save HTML

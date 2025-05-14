@@ -13,11 +13,10 @@ def test_generate_conformers_and_optimize():
 
 def test_calc_geometry():
     mol = Chem.MolFromSmiles("O=C1O[C@@H](CNC(=O)C)CN1c3cc(F)c(N2CCOCC2)cc3")
-    mol = Chem.AddHs(mol)
-    Chem.AllChem.EmbedMolecule(mol)
-    Chem.AllChem.MMFFOptimizeMolecule(mol)
-    energies = {0: 0.0}
-    npr1, npr2, geometry = calc_geometry(mol, energies)
-    assert npr1 is not None
-    assert npr2 is not None
-    assert geometry in ["Balanced", "Rod-like", "Sphere-like", "Disc-like"]
+    result_mol, energies = generate_conformers_and_optimize(
+        mol, random_seed=42, force_tolerance=0.001, prune_thresh=0.1, num_conformers=10, energy_range=3.0
+    )
+    npr1, npr2, geometry = calc_geometry(result_mol, energies)
+    assert round(npr1, 3) == 0.088
+    assert round(npr2, 2) == 0.95
+    assert geometry in ["Balanced"]

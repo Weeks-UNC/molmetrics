@@ -17,22 +17,44 @@ license = { text = "BSD-3-Clause" }
 classifiers = [
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
 ]
 requires-python = ">=3.8"
-# Declare any run-time dependencies that should be installed with the package.
-#dependencies = [
-#    "importlib-resources;python_version<'3.10'",
-#]
-
-# Update the urls once the hosting is set up.
-#[project.urls]
-#"Source" = "https://github.com/<username>/molmetrics/"
-#"Documentation" = "https://molmetrics.readthedocs.io/"
+dependencies = [
+    "rdkit>=2025.03.2",
+    "pandas>=2.2.3",
+    "openpyxl>=3.1.5",
+    "numpy>=2.2.5",
+    "scipy>=1.13.1",         # Check your actual scipy version if used
+    "tqdm>=4.66.4",          # Check your actual tqdm version if used
+    "matplotlib>=3.10.1",
+    "importlib-resources; python_version<'3.10'",
+    "argparse; python_version<'3.7'",
+    # pytest and test tools should be in optional-dependencies
+]
 
 [project.optional-dependencies]
 test = [
   "pytest>=6.1.2",
+  "pytest-cov",
 ]
+docs = [
+  "sphinx",
+  "sphinx-autodoc-typehints",
+  "sphinx-copybutton",
+  "sphinx-design",
+  "pydata-sphinx-theme",
+]
+
+[project.urls]
+Homepage = "https://github.com/Weeks-UNC/molmetrics"
+Documentation = "https://github.com/Weeks-UNC/molmetrics"
+Source = "https://github.com/Weeks-UNC/molmetrics"
+Issues = "https://github.com/Weeks-UNC/molmetrics/issues"
 
 [tool.setuptools]
 # This subkey is a beta stage development and keys may change in the future, see https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html for more details

@@ -46,6 +46,23 @@ jobs:
               - conda-forge
           create-args: >- 
             python=${{ matrix.python-version }}
+        id: setup-micromamba
+
+      # Workaround for micromamba cleanup bug on Linux runners
+      - name: Workaround micromamba cleanup bug (Linux)
+        if: runner.os == 'Linux'
+        run: mkdir -p /home/runner/work/_temp/setup-micromamba/micromamba-shell
+
+      # Workaround for micromamba cleanup bug on macOS runners
+      - name: Workaround micromamba cleanup bug (macOS)
+        if: runner.os == 'macOS'
+        run: mkdir -p /Users/runner/work/_temp/setup-micromamba/micromamba-shell
+
+      # Workaround for micromamba cleanup bug on Windows runners
+      - name: Workaround micromamba cleanup bug (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          echo. > C:\Users\runneradmin\.bash_profile
 
       - name: Install package
         # conda setup requires this special shell

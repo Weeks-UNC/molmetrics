@@ -51,24 +51,23 @@ jobs:
       # Workaround for micromamba cleanup bug on Linux runners
       - name: Workaround micromamba cleanup bug (Linux)
         if: runner.os == 'Linux'
+        continue-on-error: true
         run: |
-          if [ ! -d /home/runner/work/_temp/setup-micromamba/micromamba-shell ]; then
-            mkdir -p /home/runner/work/_temp/setup-micromamba/micromamba-shell
-          fi
+          mkdir -p /home/runner/work/_temp/setup-micromamba/micromamba-shell
 
       # Workaround for micromamba cleanup bug on macOS runners
       - name: Workaround micromamba cleanup bug (macOS)
         if: runner.os == 'macOS'
+        continue-on-error: true
         run: |
-          if [ ! -d /Users/runner/work/_temp/setup-micromamba/micromamba-shell ]; then
-            mkdir -p /Users/runner/work/_temp/setup-micromamba/micromamba-shell
-          fi
+          mkdir -p /Users/runner/work/_temp/setup-micromamba/micromamba-shell
 
       # Workaround for micromamba cleanup bug on Windows runners
       - name: Workaround micromamba cleanup bug (Windows)
         if: runner.os == 'Windows'
+        continue-on-error: true
         run: |
-          if not exist C:\Users\runneradmin\.bash_profile type nul > C:\Users\runneradmin\.bash_profile
+          echo. > C:\Users\runneradmin\.bash_profile
 
       # Add a step to debug long environment solve times or timeouts
       - name: Show conda info and environment
@@ -96,4 +95,5 @@ jobs:
         with:
           file: ./coverage.xml
           flags: unittests
+          name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
           name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}

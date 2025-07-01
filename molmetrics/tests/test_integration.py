@@ -27,12 +27,18 @@ def test_molmetrics_integration(tmp_path):
     # Run the command
     result = subprocess.run(command, capture_output=True, text=True)
 
+    # Print subprocess output for debugging
+    print("STDOUT:\n", result.stdout)
+    print("STDERR:\n", result.stderr)
+
     # Assert the command ran successfully
     assert result.returncode == 0, f"Command failed with error: {result.stderr}"
 
     # Verify the output file exists
     generated_output_file = output_dir / "mini_test_library_qed.sdf"
-    assert generated_output_file.exists(), "Output file was not generated."
+    if not generated_output_file.exists():
+        print(f"Output directory contents: {list(output_dir.iterdir())}")
+        raise AssertionError("Output file was not generated.")
 
     # Compare the generated output with the expected output
     if not filecmp.cmp(generated_output_file, expected_output_file, shallow=False):

@@ -36,46 +36,14 @@ jobs:
           df -h
           ulimit -a
 
-      # More info on options: https://github.com/marketplace/actions/setup-micromamba
+      # More info on options: https://github.com/marketplace/actions/provision-with-micromamba
       - uses: mamba-org/setup-micromamba@v1
         with:
           environment-file: devtools/conda-envs/test_env.yaml
           environment-name: test
-          condarc: |
-            channels:
-              - conda-forge
-          create-args: >-
+          channels: conda-forge,defaults
+          extra-specs: |
             python=${{ matrix.python-version }}
-        id: setup-micromamba
-
-      # Workaround for micromamba cleanup bug on Linux runners
-      - name: Workaround micromamba cleanup bug (Linux)
-        if: runner.os == 'Linux'
-        continue-on-error: true
-        run: |
-          mkdir -p /home/runner/work/_temp/setup-micromamba/micromamba-shell
-
-      # Workaround for micromamba cleanup bug on macOS runners
-      - name: Workaround micromamba cleanup bug (macOS)
-        if: runner.os == 'macOS'
-        continue-on-error: true
-        run: |
-          mkdir -p /Users/runner/work/_temp/setup-micromamba/micromamba-shell
-
-      # Workaround for micromamba cleanup bug on Windows runners
-      - name: Workaround micromamba cleanup bug (Windows)
-        if: runner.os == 'Windows'
-        continue-on-error: true
-        run: |
-          echo. > C:\Users\runneradmin\.bash_profile
-
-      # Add a step to debug long environment solve times or timeouts
-      - name: Show conda info and environment
-        shell: bash -l {0}
-        run: |
-          micromamba info
-          micromamba env list
-          micromamba list
 
       - name: Install package
         # conda setup requires this special shell
@@ -88,12 +56,11 @@ jobs:
         # conda setup requires this special shell
         shell: bash -l {0}
         run: |
-          pytest -v --cov=molmetrics --cov-report=xml --color=yes molmetrics/tests/
+          pytest -v --cov=molecool --cov-report=xml --color=yes molecool/tests/
 
       - name: CodeCov
         uses: codecov/codecov-action@v1
         with:
           file: ./coverage.xml
           flags: unittests
-          name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
           name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}

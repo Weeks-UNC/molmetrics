@@ -10,8 +10,8 @@ def test_molmetrics_integration(tmp_path):
     the generated output file with the expected results.
     """
     # Paths
-    input_file = Path("/home/sethv/github/molmetrics/molmetrics/data/mini_test_library.sdf")
-    expected_output_file = Path("/home/sethv/github/molmetrics/molmetrics/data/mini_test_library_output/mini_test_library_qed_reference.sdf")
+    input_file = Path(__file__).parent.parent / "data" / "mini_test_library.sdf"
+    expected_output_file = Path(__file__).parent.parent / "data" / "mini_test_library_output" / "mini_test_library_qed_reference.sdf"
     output_dir = tmp_path / "test_output"
     output_dir.mkdir()
 
@@ -26,6 +26,11 @@ def test_molmetrics_integration(tmp_path):
 
     # Run the command
     result = subprocess.run(command, capture_output=True, text=True)
+    
+    print("STDOUT:\n", result.stdout)
+    print("STDERR:\n", result.stderr)
+    print(f"Looking for output file: {output_dir / 'mini_test_library_qed.sdf'}")
+    print(f"Output directory contents: {list(output_dir.iterdir())}")
 
     # Assert the command ran successfully
     assert result.returncode == 0, f"Command failed with error: {result.stderr}"

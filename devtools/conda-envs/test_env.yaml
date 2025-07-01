@@ -10,7 +10,6 @@ dependencies:
   - pandas
   - numpy
   - openpyxl
-  - tqdm
 
   # Testing dependencies
   - pytest

@@ -29,9 +29,6 @@ dependencies = [
     "pandas>=2.2.3",
     "openpyxl>=3.1.5",
     "numpy>=2.2.5",
-    "scipy>=1.13.1",         # Check your actual scipy version if used
-    "tqdm>=4.66.4",          # Check your actual tqdm version if used
-    "matplotlib>=3.10.1",
     "importlib-resources; python_version<'3.10'",
     "argparse; python_version<'3.7'",
     # pytest and test tools should be in optional-dependencies

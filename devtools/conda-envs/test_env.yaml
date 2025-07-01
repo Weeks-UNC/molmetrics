@@ -7,15 +7,13 @@ dependencies:
 
   # Package dependencies
   - rdkit>=2025.03.2
-  - pandas>=2.2.3
-  - numpy>=2.2.5
-  - scipy>=1.13.1
-  - matplotlib>=3.10.1
-  - openpyxl>=3.1.5
-  - tqdm>=4.66.4
+  - pandas
+  - numpy
+  - openpyxl
+  - tqdm
 
   # Testing dependencies
-  - pytest>=8.3.5
+  - pytest
   - pytest-cov
   - codecov
 

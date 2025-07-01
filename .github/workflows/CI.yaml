@@ -51,18 +51,24 @@ jobs:
       # Workaround for micromamba cleanup bug on Linux runners
       - name: Workaround micromamba cleanup bug (Linux)
         if: runner.os == 'Linux'
-        run: mkdir -p /home/runner/work/_temp/setup-micromamba/micromamba-shell
+        run: |
+          if [ ! -d /home/runner/work/_temp/setup-micromamba/micromamba-shell ]; then
+            mkdir -p /home/runner/work/_temp/setup-micromamba/micromamba-shell
+          fi
 
       # Workaround for micromamba cleanup bug on macOS runners
       - name: Workaround micromamba cleanup bug (macOS)
         if: runner.os == 'macOS'
-        run: mkdir -p /Users/runner/work/_temp/setup-micromamba/micromamba-shell
+        run: |
+          if [ ! -d /Users/runner/work/_temp/setup-micromamba/micromamba-shell ]; then
+            mkdir -p /Users/runner/work/_temp/setup-micromamba/micromamba-shell
+          fi
 
       # Workaround for micromamba cleanup bug on Windows runners
       - name: Workaround micromamba cleanup bug (Windows)
         if: runner.os == 'Windows'
         run: |
-          echo. > C:\Users\runneradmin\.bash_profile
+          if not exist C:\Users\runneradmin\.bash_profile type nul > C:\Users\runneradmin\.bash_profile
 
       # Add a step to debug long environment solve times or timeouts
       - name: Show conda info and environment

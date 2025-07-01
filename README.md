@@ -1,8 +1,8 @@
 molmetrics
 ==============================
 [//]: # (Badges)
-[![GitHub Actions Build Status](https://github.com/REPLACE_WITH_OWNER_ACCOUNT/molmetrics/workflows/CI/badge.svg)](https://github.com/REPLACE_WITH_OWNER_ACCOUNT/molmetrics/actions?query=workflow%3ACI)
-[![codecov](https://codecov.io/gh/REPLACE_WITH_OWNER_ACCOUNT/molmetrics/branch/main/graph/badge.svg)](https://codecov.io/gh/REPLACE_WITH_OWNER_ACCOUNT/molmetrics/branch/main)
+[![GitHub Actions Build Status](https://github.com/Weeks-UNC/molmetrics/workflows/CI/badge.svg)](https://github.com/Weeks-UNC/molmetrics/actions?query=workflow%3ACI)
+[![codecov](https://codecov.io/gh/Weeks-UNC/molmetrics/branch/main/graph/badge.svg)](https://codecov.io/gh/Weeks-UNC/molmetrics/branch/main)
 
 
 A package for calculating QED scores, molecular descriptors, and optimized geometry descriptors for libraries of small molecules.

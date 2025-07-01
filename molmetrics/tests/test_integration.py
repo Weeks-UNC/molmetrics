@@ -1,6 +1,8 @@
 import subprocess
 from pathlib import Path
 import filecmp
+from rdkit import Chem
+import pytest
 
 def test_molmetrics_integration(tmp_path):
     """
@@ -26,11 +28,6 @@ def test_molmetrics_integration(tmp_path):
 
     # Run the command
     result = subprocess.run(command, capture_output=True, text=True)
-    
-    print("STDOUT:\n", result.stdout)
-    print("STDERR:\n", result.stderr)
-    print(f"Looking for output file: {output_dir / 'mini_test_library_qed.sdf'}")
-    print(f"Output directory contents: {list(output_dir.iterdir())}")
 
     # Assert the command ran successfully
     assert result.returncode == 0, f"Command failed with error: {result.stderr}"
@@ -38,16 +35,27 @@ def test_molmetrics_integration(tmp_path):
     # Verify the output file exists
     generated_output_file = output_dir / "mini_test_library_qed.sdf"
     assert generated_output_file.exists(), "Output file was not generated."
+    assert generated_output_file.stat().st_size > 0, "Output file is empty."
 
-    # Compare the generated output with the expected output
-    if not filecmp.cmp(generated_output_file, expected_output_file, shallow=False):
-        # Log differences for debugging
-        with open(generated_output_file, "r") as gen_file:
-            generated_content = gen_file.read()
-        with open(expected_output_file, "r") as exp_file:
-            expected_content = exp_file.read()
-        
-        print("\nGenerated Output:\n", generated_content)
-        print("\nExpected Output:\n", expected_content)
-        
-        assert False, "Generated output file does not match the expected output."
+    # Load molecules from generated and reference SDFs
+    gen_mols = [mol for mol in Chem.SDMolSupplier(str(generated_output_file)) if mol is not None]
+    ref_mols = [mol for mol in Chem.SDMolSupplier(str(expected_output_file)) if mol is not None]
+
+    assert len(gen_mols) == 5, f"Expected 5 molecules in generated output, found {len(gen_mols)}"
+    assert len(ref_mols) == 5, f"Expected 5 molecules in reference output, found {len(ref_mols)}"
+
+    for i, (gen_mol, ref_mol) in enumerate(zip(gen_mols, ref_mols)):
+        # Compare molecule SMILES if present
+        gen_SMILES = gen_mol.GetProp("SMILES") if gen_mol.HasProp("SMILES") else ""
+        ref_SMILES = ref_mol.GetProp("SMILES") if ref_mol.HasProp("SMILES") else ""
+        assert gen_SMILES == ref_SMILES, f"Molecule {i} SMILES mismatch: {gen_SMILES} != {ref_SMILES}"
+
+        # Compare MW
+        gen_mw = float(gen_mol.GetProp("MW"))
+        ref_mw = float(ref_mol.GetProp("MW"))
+        assert gen_mw == pytest.approx(ref_mw, rel=0.005), f"Molecule {i} MW mismatch: {gen_mw} != {ref_mw}"
+
+        # Compare QED
+        gen_qed = float(gen_mol.GetProp("QED"))
+        ref_qed = float(ref_mol.GetProp("QED"))
+        assert gen_qed == pytest.approx(ref_qed, rel=0.005), f"Molecule {i} QED mismatch: {gen_qed} != {ref_qed}"

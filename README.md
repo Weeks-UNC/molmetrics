@@ -8,6 +8,27 @@ molmetrics
 
 A package for calculating QED scores, molecular descriptors, and optimized geometry descriptors for libraries of small molecules.
 
+## Installation
+
+You can install the latest release of molmetrics from PyPI using pip:
+
+```bash
+pip install molmetrics
+```
+
+For the best experience, it is recommended to use a virtual environment (such as `venv` or `conda`).
+
+### Conda environment (recommended for reproducibility)
+
+A sample conda environment file is provided at `devtools/conda-envs/test_env.yaml`. To create and activate the environment:
+
+```bash
+conda env create -f devtools/conda-envs/test_env.yaml
+conda activate molmetrics-test
+```
+
+This will install all required dependencies for development and testing.
+
 ## Command line options
 
         -h, --help            show this help message and exit

@@ -53,6 +53,9 @@ Documentation = "https://github.com/Weeks-UNC/molmetrics"
 Source = "https://github.com/Weeks-UNC/molmetrics"
 Issues = "https://github.com/Weeks-UNC/molmetrics/issues"
 
+[project.scripts]
+molmetrics = "molmetrics.__main__:main"
+
 [tool.setuptools]
 # This subkey is a beta stage development and keys may change in the future, see https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html for more details
 #

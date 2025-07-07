@@ -61,14 +61,14 @@ jobs:
         # conda setup requires this special shell
         shell: bash -l {0}
         run: |
-          python -m pip install . --no-deps
+          pip install -e .[test]
           micromamba list
 
       - name: Run tests
         # conda setup requires this special shell
         shell: bash -l {0}
         run: |
-          pytest -v --cov=molmetrics --cov-report=xml --color=yes molmetrics/tests/
+          pytest -v --cov=molmetrics --cov-report=xml --color=yes
 
       - name: CodeCov
         uses: codecov/codecov-action@v1

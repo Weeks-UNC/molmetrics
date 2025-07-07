@@ -3,6 +3,7 @@ molmetrics
 [//]: # (Badges)
 [![GitHub Actions Build Status](https://github.com/Weeks-UNC/molmetrics/workflows/CI/badge.svg)](https://github.com/Weeks-UNC/molmetrics/actions?query=workflow%3ACI)
 [![codecov](https://codecov.io/gh/Weeks-UNC/molmetrics/branch/main/graph/badge.svg)](https://codecov.io/gh/Weeks-UNC/molmetrics/branch/main)
+[![PyPI version](https://img.shields.io/pypi/v/molmetrics.svg)](https://pypi.org/project/molmetrics/)
 
 
 A package for calculating QED scores, molecular descriptors, and optimized geometry descriptors for libraries of small molecules.

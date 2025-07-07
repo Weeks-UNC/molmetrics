@@ -6,28 +6,63 @@ molmetrics
 [![PyPI version](https://img.shields.io/pypi/v/molmetrics.svg)](https://pypi.org/project/molmetrics/)
 
 
-A package for calculating QED scores, molecular descriptors, and optimized geometry descriptors for libraries of small molecules.
+A Python package for calculating QED scores, molecular descriptors, and optimized geometry descriptors for libraries of small molecules.
+
+**Molmetrics is tested on macOS, Linux (Ubuntu), and Windows with Python >=3.10.**
 
 ## Installation
 
-You can install the latest release of molmetrics from PyPI using pip:
+You can install the latest release of molmetrics from PyPI using pip. It is recommended to do this in a clean Python environment (such as one created with `python -m venv`).
+
+### Install with pip
 
 ```bash
+python -m venv molmetrics-env
+source molmetrics-env/bin/activate  # On Windows use: molmetrics-env\Scripts\activate
+pip install --upgrade pip
 pip install molmetrics
 ```
 
-For the best experience, it is recommended to use a virtual environment (such as `venv` or `conda`).
-
-### Conda environment (recommended for reproducibility)
-
-A sample conda environment file is provided at `devtools/conda-envs/test_env.yaml`. To create and activate the environment:
+After installation, you can check that molmetrics is installed and working:
 
 ```bash
-conda env create -f devtools/conda-envs/test_env.yaml
-conda activate molmetrics-test
+molmetrics --help
 ```
 
-This will install all required dependencies for development and testing.
+This will display the command-line help and available options.
+
+### Note on dependencies
+All required dependencies will be installed automatically with pip. If you encounter issues with scientific dependencies (such as RDKit), you may prefer to use the provided **conda environment** file for a fully reproducible setup:
+
+- `devtools/conda-envs/test_env.yaml`
+
+## Usage
+
+Before using molmetrics, ensure that you have activated the virtual environment where molmetrics is installed.
+
+**For Linux/Mac:**
+```bash
+source molmetrics-env/bin/activate
+```
+
+**For Windows:**
+```bash
+molmetrics-env\Scripts\activate
+```
+
+After activating the virtual environment, you can run molmetrics from the command line. QED scores will automatically be generated, but if you want to include additional metrics such as QED properties (`-p`), select molecular descriptors (`-md`), and geometry descriptors (`-g`), enable them with the corresponding user arguments.
+
+For example, to process a file with the default QED score:
+
+```bash
+molmetrics -f path/to/input.sdf -o path/to/output_dir
+```
+
+To include additional metrics, add the relevant flags as needed. For more options, see:
+
+```bash
+molmetrics --help
+```
 
 ## Command line options
 

@@ -362,22 +362,26 @@ def parseArgs():
     return args
 
 
-def main(
-    directory: str | Path,
-    file: list[Path] | None,
-    molecule: list[str] | None,
-    out: str | Path,
-    column: str,
-    substructures: list | None,
-    properties: bool,
-    moldescriptors: bool,
-    geometry: bool,
-    random_seed: int,
-    force_tolerance: float,
-    prune_thresh: float,
-    num_conformers: int,
-    energy_range: float,
-    no_img: bool,
+def main():
+    args = parseArgs()
+    main_logic(**vars(args))
+
+def main_logic(
+    directory: str | Path = None,
+    file: list[Path] | None = None,
+    molecule: list[str] | None = None,
+    out: str | Path = None,
+    column: str = "SMILES",
+    substructures: list | None = None,
+    properties: bool = False,
+    moldescriptors: bool = False,
+    geometry: bool = False,
+    random_seed: int = 1789,
+    force_tolerance: float = 0.001,
+    prune_thresh: float = 0.1,
+    num_conformers: int = 1000,
+    energy_range: float = 3.0,
+    no_img: bool = False,
 ):
     """
     Main function for processing input files and calculating molecular metrics.
@@ -425,7 +429,6 @@ def main(
             process_file(file, column, substructures, properties, moldescriptors, geometry, random_seed, force_tolerance, prune_thresh, num_conformers, energy_range, out, no_img)
     except Exception as e:
         logging.critical(f"Critical error in main: {e}", exc_info=True)
-    
-    
+
 if __name__ == "__main__":
-    main(**vars(parseArgs()))
+    main()
